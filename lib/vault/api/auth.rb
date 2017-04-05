@@ -84,15 +84,26 @@ module Vault
     #     "6a174c20-f6de-a53c-74d2-6018fcceff64",
     #   ) #=> #<Vault::Secret lease_id="">
     #
+    # @example with a custom mount point
+    #   Vault.auth.approle(
+    #     "db02de05-fa39-4855-059b-67221c5c2f63",
+    #     "6a174c20-f6de-a53c-74d2-6018fcceff64",
+    #     mount: "new-app-role",
+    #   )
+    #
     # @param [String] role_id
     # @param [String] secret_id (default: nil)
     #   It is required when `bind_secret_id` is enabled for the specified role_id
+    # @param [Hash] options
+    #   additional options to pass to the authentication call, such as a custom
+    #   mount point
     #
     # @return [Secret]
-    def approle(role_id, secret_id=nil)
+    def approle(role_id, secret_id=nil, options = {})
       payload = { role_id: role_id }
       payload[:secret_id] = secret_id if secret_id
-      json = client.post("/v1/auth/approle/login", JSON.fast_generate(payload))
+      mount = options[:mount] || "approle"
+      json = client.post("/v1/auth/#{mount}/login", JSON.fast_generate(payload))
       secret = Secret.decode(json)
       client.token = secret.auth.client_token
       return secret
